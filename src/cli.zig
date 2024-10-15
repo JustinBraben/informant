@@ -6,6 +6,7 @@ const mem = std.mem;
 const Allocator = mem.Allocator;
 const builtin = @import("builtin");
 
+const Errors = @import("errors.zig");
 const Options = @import("options.zig");
 const OutputStyleOption = Options.OutputStyleOption;
 const ExportManager = @import("export/export_manager.zig");
@@ -77,6 +78,26 @@ pub fn get_cli_arguments(allocator: Allocator) !Cli {
     var command = try allocator.alloc([]const u8, command_str_len);
     for (res.positionals, 0..) |s, index| {
         command[index] = try allocator.dupe(u8, s);
+    }
+
+    if (command_str_len < 1) {
+        const stderr_file = std.io.getStdErr().writer();
+        var bw = std.io.bufferedWriter(stderr_file);
+        const stderr = bw.writer();
+
+        try stderr.print(
+            \\error: The following required arguments were not provided:
+            \\    <command>... not specified
+            \\
+            \\USAGE:
+            \\    zig build run -- [OPTIONS] <command>...
+            \\
+            \\For more information try --help
+            \\
+        , .{});
+        try bw.flush(); // don't forget to flush!
+
+        return Errors.ParameterScanError.CommandRequired;
     }
 
     return .{
