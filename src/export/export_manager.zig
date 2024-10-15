@@ -49,11 +49,10 @@ pub fn write_results(self: *ExportManager, results: *ArrayList(BenchmarkResult),
 
         // TODO: Implement
         try stdout.print(
-            \\PLACEHOLDER BENCHMARK OUTPUT
-            \\Benchmark 1: ./path/to/some_exe
-            \\  Time (mean ± σ):      3.279 s ±  0.511 s    [User: 3.600 s, System: 65.803 s]
-            \\  Range (min … max):    2.485 s …  4.058 s    10 runs
-        , .{});
+            \\Benchmark 1: {s}
+            \\  Time (mean ± σ):      3.279 s ±  0.511 s  [User: 3.600 s, System: 65.803 s]
+            \\  Range (min … max):    {d:.3} s …  {d:.3} s  10 runs
+        , .{ "Get-Date", 2.485, 4.058 });
 
         try bw.flush(); // don't forget to flush!
     }

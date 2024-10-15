@@ -34,7 +34,7 @@ pub fn main() !void {
 
     try scheduler.run_benchmarks();
     // try scheduler.print_relative_speed_comparison();
-    // try scheduler.final_export();
+    try scheduler.final_export();
 
     // try cli_arguments.print_members();
 }

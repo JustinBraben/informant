@@ -66,11 +66,6 @@ pub fn get_cli_arguments(allocator: Allocator) !Cli {
     };
     defer res.deinit();
 
-    // Write help if -h was passed
-    if (res.args.help != 0) {
-        try clap.help(std.io.getStdErr().writer(), clap.Help, &params, .{});
-    }
-
     var command_str_len: usize = 0;
     for (res.positionals) |_| {
         command_str_len +|= 1;
@@ -78,6 +73,13 @@ pub fn get_cli_arguments(allocator: Allocator) !Cli {
     var command = try allocator.alloc([]const u8, command_str_len);
     for (res.positionals, 0..) |s, index| {
         command[index] = try allocator.dupe(u8, s);
+    }
+
+    // Write help if -h was passed
+    if (res.args.help != 0) {
+        try clap.help(std.io.getStdErr().writer(), clap.Help, &params, .{});
+        // TODO: Fix hack to show help even when no <Command> is given
+        if (command_str_len == 0) command_str_len += 1;
     }
 
     if (command_str_len < 1) {

@@ -7,6 +7,7 @@ const Allocator = mem.Allocator;
 const ArrayList = std.ArrayList;
 const builtin = @import("builtin");
 
+const Benchmark = @import("benchmark.zig");
 const BenchmarkResult = @import("benchmark_result.zig");
 const Commands = @import("../commands.zig");
 const ExportManager = @import("../export/export_manager.zig");
@@ -36,18 +37,25 @@ pub fn deinit(self: *Scheduler) void {
 // TODO: Run commands and time how long they take
 // Store the results in self.results
 pub fn run_benchmarks(self: *Scheduler) !void {
-    const shell = Shell{};
-    const command = self.commands.command_list.items[0].expression;
-    const res = try std.process.Child.run(.{
-        .argv = &[_][]const u8{ shell.default, command },
-        .allocator = self.allocator,
-    });
+    for (self.commands.command_list.items, 1..) |_, index| {
+        var benchmark = try Benchmark.init(self.allocator, index, self.commands, self.options);
+        defer benchmark.deinit();
 
-    const stdout_file = std.io.getStdOut().writer();
-    var bw = std.io.bufferedWriter(stdout_file);
-    const stdout = bw.writer();
-    try stdout.print("res: {s}\n", .{res.stdout});
-    try bw.flush(); // don't forget to flush!
+        try self.results.append(try benchmark.run());
+
+        // const shell = Shell{};
+        // const command = commands.expression;
+        // const res = try std.process.Child.run(.{
+        //     .argv = &[_][]const u8{ shell.default, command },
+        //     .allocator = self.allocator,
+        // });
+
+        // const stdout_file = std.io.getStdOut().writer();
+        // var bw = std.io.bufferedWriter(stdout_file);
+        // const stdout = bw.writer();
+        // try stdout.print("running command {s}: {s}\n", .{ command, res.stdout });
+        // try bw.flush(); // don't forget to flush!
+    }
 }
 
 pub fn final_export(self: *Scheduler) !void {
