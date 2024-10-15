@@ -39,3 +39,16 @@ pub fn from_cli_arguments(allocator: Allocator, cli_args: Cli) !Options {
 pub fn deinit(self: *Options) void {
     _ = &self;
 }
+
+/// Helper function to print out options
+pub fn print_members(self: *Options) !void {
+    const stdout_file = std.io.getStdOut().writer();
+    var bw = std.io.bufferedWriter(stdout_file);
+    const stdout = bw.writer();
+
+    inline for (std.meta.fields(@TypeOf(self.*))) |f| {
+        try stdout.print(f.name ++ ": {any}\n", .{@as(f.type, @field(self.*, f.name))});
+    }
+
+    try bw.flush(); // don't forget to flush!
+}

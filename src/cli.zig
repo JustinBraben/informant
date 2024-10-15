@@ -8,6 +8,8 @@ const builtin = @import("builtin");
 
 const Options = @import("options.zig");
 const OutputStyleOption = Options.OutputStyleOption;
+const ExportManager = @import("export/export_manager.zig");
+const TimeUnit = ExportManager.TimeUnit;
 const clap = @import("clap");
 
 allocator: Allocator,
@@ -17,6 +19,7 @@ min_runs: usize = 10,
 max_runs: usize = 0,
 runs: usize = 0,
 style: OutputStyleOption = .Full,
+time_unit: TimeUnit = .Millisecond,
 help: bool = false,
 version: bool = false,
 
@@ -34,6 +37,7 @@ pub fn get_cli_arguments(allocator: Allocator) !Cli {
         \\                                  interactive output without any colors. Set this to 'Color' to keep the colors
         \\                                  without any interactive output. Set this to 'None' to disable all the output
         \\                                  of the tool.
+        \\-u, --time_unit <TimeUnit>        Set the time unit to be used. Possible values: Millisecond, Second.
         \\-h, --help                        Print this help message and exit.
         \\-V, --version                     Show version information.
         \\
@@ -42,6 +46,7 @@ pub fn get_cli_arguments(allocator: Allocator) !Cli {
     const parsers = comptime .{
         .NUM = clap.parsers.int(usize, 10),
         .OutputStyleOption = clap.parsers.enumeration(OutputStyleOption),
+        .TimeUnit = clap.parsers.enumeration(TimeUnit),
     };
 
     var diag = clap.Diagnostic{};
@@ -66,6 +71,7 @@ pub fn get_cli_arguments(allocator: Allocator) !Cli {
         .max_runs = if (res.args.max_runs) |max_r| max_r else 0,
         .runs = if (res.args.runs) |r| r else 0,
         .style = if (res.args.style) |s| s else .Full,
+        .time_unit = if (res.args.time_unit) |ts| ts else .Millisecond,
         .help = res.args.help != 0,
         .version = res.args.version != 0,
     };
@@ -75,7 +81,8 @@ pub fn deinit(self: *Cli) void {
     _ = &self;
 }
 
-pub fn print_args(self: *Cli) !void {
+/// Helper function to print out arguments made through Cli
+pub fn print_members(self: *Cli) !void {
     const stdout_file = std.io.getStdOut().writer();
     var bw = std.io.bufferedWriter(stdout_file);
     const stdout = bw.writer();
