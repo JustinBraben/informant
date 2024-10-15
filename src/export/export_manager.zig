@@ -7,6 +7,7 @@ const Allocator = mem.Allocator;
 const ArrayList = std.ArrayList;
 const builtin = @import("builtin");
 
+const BenchmarkResult = @import("../benchmark/benchmark_result.zig");
 const Cli = @import("../cli.zig");
 
 pub const TimeUnit = enum {
@@ -32,6 +33,15 @@ pub fn from_cli_arguments(allocator: Allocator, cli_args: Cli) !ExportManager {
 pub fn deinit(self: *ExportManager) void {
     _ = &self;
 }
+
+pub fn write_results(self: *ExportManager) !void {
+    _ = &self;
+}
+
+// TODO:
+// pub fn write_results(self: *ExportManager, results: *ArrayList(BenchmarkResult), sort_order: SortOrder, false) !void {
+//     _ = &self;
+// }
 
 /// Helper function to print out options
 pub fn print_members(self: *ExportManager) !void {

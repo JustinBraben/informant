@@ -20,6 +20,7 @@ max_runs: usize = 0,
 runs: usize = 0,
 style: OutputStyleOption = .Full,
 time_unit: TimeUnit = .Millisecond,
+command_name: ?[]const u8 = null,
 help: bool = false,
 version: bool = false,
 
@@ -38,6 +39,7 @@ pub fn get_cli_arguments(allocator: Allocator) !Cli {
         \\                                  without any interactive output. Set this to 'None' to disable all the output
         \\                                  of the tool.
         \\-u, --time_unit <TimeUnit>        Set the time unit to be used. Possible values: Millisecond, Second.
+        \\-n, --command_name <NAME>         Give a meaningful name to a command
         \\-h, --help                        Print this help message and exit.
         \\-V, --version                     Show version information.
         \\
@@ -47,6 +49,7 @@ pub fn get_cli_arguments(allocator: Allocator) !Cli {
         .NUM = clap.parsers.int(usize, 10),
         .OutputStyleOption = clap.parsers.enumeration(OutputStyleOption),
         .TimeUnit = clap.parsers.enumeration(TimeUnit),
+        .NAME = clap.parsers.string,
     };
 
     var diag = clap.Diagnostic{};
@@ -72,13 +75,14 @@ pub fn get_cli_arguments(allocator: Allocator) !Cli {
         .runs = if (res.args.runs) |r| r else 0,
         .style = if (res.args.style) |s| s else .Full,
         .time_unit = if (res.args.time_unit) |ts| ts else .Millisecond,
+        .command_name = if (res.args.command_name) |s| try allocator.dupe(u8, s) else null,
         .help = res.args.help != 0,
         .version = res.args.version != 0,
     };
 }
 
 pub fn deinit(self: *Cli) void {
-    _ = &self;
+    if (self.command_name) |cn| self.allocator.free(cn);
 }
 
 /// Helper function to print out arguments made through Cli

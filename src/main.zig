@@ -3,6 +3,7 @@ const Cli = @import("cli.zig");
 const Options = @import("options.zig");
 const Commands = @import("commands.zig");
 const ExportManager = @import("export/export_manager.zig");
+const Scheduler = @import("benchmark/scheduler.zig");
 const debug = std.debug;
 const print = debug.print;
 
@@ -11,6 +12,11 @@ pub fn main() !void {
 
     var cli_arguments = try Cli.get_cli_arguments(allocator);
     defer cli_arguments.deinit();
+
+    // If -h was passed help will be displayed
+    // program will exit gracefully
+    if (cli_arguments.help) return;
+
     var options = try Options.from_cli_arguments(allocator, cli_arguments);
     defer options.deinit();
     var commands = try Commands.from_cli_arguments(allocator, cli_arguments);
@@ -18,9 +24,13 @@ pub fn main() !void {
     var export_manager = try ExportManager.from_cli_arguments(allocator, cli_arguments);
     defer export_manager.deinit();
 
-    // If -h was passed help will be displayed
-    // program will exit gracefully
-    if (cli_arguments.help) return;
+    try options.validate_against_command_list(&commands);
+
+    var scheduler = try Scheduler.init(allocator, &commands, &options, &export_manager);
+    defer scheduler.deinit();
+    // try scheduler.run_benchmarks();
+    // try scheduler.print_relative_speed_comparison();
+    try scheduler.final_export();
 }
 
 /// dump cli info to window

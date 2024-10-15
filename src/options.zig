@@ -7,13 +7,7 @@ const Allocator = mem.Allocator;
 const builtin = @import("builtin");
 
 const Cli = @import("cli.zig");
-
-allocator: Allocator,
-
-/// Number of warmup runs
-warmup_count: u64 = 0,
-/// What color mode to use for the terminal output
-output_style: OutputStyleOption = .Full,
+const Commands = @import("commands.zig");
 
 pub const OutputStyleOption = enum {
     /// Do not output with colors or any special formatting
@@ -28,16 +22,48 @@ pub const OutputStyleOption = enum {
     Disabled,
 };
 
+pub const SortOrder = enum {
+    Command,
+    MeanTime,
+};
+
+/// Bounds for the number of benchmark runs
+pub const RunBounds = struct {
+    /// Minimum number of benchmark runs
+    min: u64,
+    /// Maximum number of benchmark runs
+    max: ?u64,
+};
+
+// Members
+
+allocator: Allocator,
+/// Number of warmup runs
+warmup_count: u64 = 0,
+/// What color mode to use for the terminal output
+output_style: OutputStyleOption = .Full,
+/// How to order benchmarks in the relative speed comparison
+sort_order_speed_comparison: SortOrder = .MeanTime,
+/// How to order benchmarks in the markup format exports
+sort_order_exports: SortOrder = .Command,
+
 pub fn from_cli_arguments(allocator: Allocator, cli_args: Cli) !Options {
     return .{
         .allocator = allocator,
         .warmup_count = cli_args.warmup,
         .output_style = cli_args.style,
+        .sort_order_speed_comparison = .MeanTime,
+        .sort_order_exports = .Command,
     };
 }
 
 pub fn deinit(self: *Options) void {
     _ = &self;
+}
+
+pub fn validate_against_command_list(self: *Options, commands: *Commands) !void {
+    _ = &self;
+    _ = &commands;
 }
 
 /// Helper function to print out options
