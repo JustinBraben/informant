@@ -1,4 +1,5 @@
 const std = @import("std");
+const testing = std.testing;
 const Cli = @import("cli.zig");
 const Options = @import("options.zig");
 const Commands = @import("commands.zig");
@@ -30,7 +31,9 @@ pub fn main() !void {
     defer scheduler.deinit();
     // try scheduler.run_benchmarks();
     // try scheduler.print_relative_speed_comparison();
-    try scheduler.final_export();
+    // try scheduler.final_export();
+
+    // try cli_arguments.print_members();
 }
 
 /// dump cli info to window
@@ -54,6 +57,22 @@ fn dump() !void {
     try options.print_members();
     try commands.print_members();
     try export_manager.print_members();
+}
+
+fn run_child_process() !void {
+    const allocator = std.heap.c_allocator;
+
+    const res = try std.process.Child.run(.{
+        .argv = &[_][]const u8{ "powershell", "echo", "hi" },
+        .allocator = allocator,
+    });
+
+    const stdout_file = std.io.getStdOut().writer();
+    var bw = std.io.bufferedWriter(stdout_file);
+    const stdout = bw.writer();
+
+    try stdout.print("res: {s}\n", .{res.stdout});
+    try bw.flush(); // don't forget to flush!
 }
 
 test "simple test" {

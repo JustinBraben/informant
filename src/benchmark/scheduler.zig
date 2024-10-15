@@ -32,9 +32,17 @@ pub fn deinit(self: *Scheduler) void {
     self.results.deinit();
 }
 
-pub fn final_export(self: *Scheduler) !void {
-    try self.export_manager.write_results();
+// TODO: Implement
+pub fn run_benchmarks(self: *Scheduler) !void {
+    _ = &self;
 
-    // TODO:
-    // self.export_manager.write_results(&self.results, self.options.sort_order_exports, false);
+    // create executor
+    // var executor = ;
+
+    // calibrate the executor
+
+}
+
+pub fn final_export(self: *Scheduler) !void {
+    try self.export_manager.write_results(&self.results, self.options.sort_order_exports, false);
 }

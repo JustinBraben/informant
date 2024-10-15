@@ -9,6 +9,8 @@ const builtin = @import("builtin");
 
 const BenchmarkResult = @import("../benchmark/benchmark_result.zig");
 const Cli = @import("../cli.zig");
+const Options = @import("../options.zig");
+const SortOrder = Options.SortOrder;
 
 pub const TimeUnit = enum {
     Millisecond,
@@ -34,14 +36,28 @@ pub fn deinit(self: *ExportManager) void {
     _ = &self;
 }
 
-pub fn write_results(self: *ExportManager) !void {
+// TODO: Implement
+pub fn write_results(self: *ExportManager, results: *ArrayList(BenchmarkResult), sort_order: SortOrder, intermediate: bool) !void {
     _ = &self;
-}
+    _ = &results;
+    _ = sort_order;
 
-// TODO:
-// pub fn write_results(self: *ExportManager, results: *ArrayList(BenchmarkResult), sort_order: SortOrder, false) !void {
-//     _ = &self;
-// }
+    if (!intermediate) {
+        const stdout_file = std.io.getStdOut().writer();
+        var bw = std.io.bufferedWriter(stdout_file);
+        const stdout = bw.writer();
+
+        // TODO: Implement
+        try stdout.print(
+            \\PLACEHOLDER BENCHMARK OUTPUT
+            \\Benchmark 1: ./path/to/some_exe
+            \\  Time (mean ± σ):      3.279 s ±  0.511 s    [User: 3.600 s, System: 65.803 s]
+            \\  Range (min … max):    2.485 s …  4.058 s    10 runs
+        , .{});
+
+        try bw.flush(); // don't forget to flush!
+    }
+}
 
 /// Helper function to print out options
 pub fn print_members(self: *ExportManager) !void {

@@ -21,6 +21,7 @@ runs: usize = 0,
 style: OutputStyleOption = .Full,
 time_unit: TimeUnit = .Millisecond,
 command_name: ?[]const u8 = null,
+command: ?[]const []const u8 = null,
 help: bool = false,
 version: bool = false,
 
@@ -42,6 +43,7 @@ pub fn get_cli_arguments(allocator: Allocator) !Cli {
         \\-n, --command_name <NAME>         Give a meaningful name to a command
         \\-h, --help                        Print this help message and exit.
         \\-V, --version                     Show version information.
+        \\<Command>...                      Command to benchmark
         \\
     );
 
@@ -50,6 +52,7 @@ pub fn get_cli_arguments(allocator: Allocator) !Cli {
         .OutputStyleOption = clap.parsers.enumeration(OutputStyleOption),
         .TimeUnit = clap.parsers.enumeration(TimeUnit),
         .NAME = clap.parsers.string,
+        .Command = clap.parsers.string,
     };
 
     var diag = clap.Diagnostic{};
@@ -67,6 +70,15 @@ pub fn get_cli_arguments(allocator: Allocator) !Cli {
         try clap.help(std.io.getStdErr().writer(), clap.Help, &params, .{});
     }
 
+    var command_str_len: usize = 0;
+    for (res.positionals) |_| {
+        command_str_len +|= 1;
+    }
+    var command = try allocator.alloc([]const u8, command_str_len);
+    for (res.positionals, 0..) |s, index| {
+        command[index] = try allocator.dupe(u8, s);
+    }
+
     return .{
         .allocator = allocator,
         .warmup = if (res.args.warmup) |w| w else 0,
@@ -76,6 +88,7 @@ pub fn get_cli_arguments(allocator: Allocator) !Cli {
         .style = if (res.args.style) |s| s else .Full,
         .time_unit = if (res.args.time_unit) |ts| ts else .Millisecond,
         .command_name = if (res.args.command_name) |s| try allocator.dupe(u8, s) else null,
+        .command = if (command_str_len != 0) command else null,
         .help = res.args.help != 0,
         .version = res.args.version != 0,
     };
@@ -83,6 +96,13 @@ pub fn get_cli_arguments(allocator: Allocator) !Cli {
 
 pub fn deinit(self: *Cli) void {
     if (self.command_name) |cn| self.allocator.free(cn);
+
+    if (self.command) |command| {
+        for (command) |cmd| {
+            self.allocator.free(cmd);
+        }
+        self.allocator.free(command);
+    }
 }
 
 /// Helper function to print out arguments made through Cli
