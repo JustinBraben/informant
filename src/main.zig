@@ -29,7 +29,10 @@ pub fn main() !void {
 
     var scheduler = try Scheduler.init(allocator, &commands, &options, &export_manager);
     defer scheduler.deinit();
-    // try scheduler.run_benchmarks();
+
+    // try commands.print_members();
+
+    try scheduler.run_benchmarks();
     // try scheduler.print_relative_speed_comparison();
     // try scheduler.final_export();
 

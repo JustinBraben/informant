@@ -9,6 +9,13 @@ const builtin = @import("builtin");
 const Cli = @import("cli.zig");
 const Commands = @import("commands.zig");
 
+const DEFAULT_SHELL_WINDOWS: []const u8 = "powershell";
+const DEFAULT_SHELL: []const u8 = if (builtin.target.os.tag == .windows) DEFAULT_SHELL_WINDOWS else "sh";
+
+pub const Shell = struct {
+    default: []const u8 = DEFAULT_SHELL,
+};
+
 pub const OutputStyleOption = enum {
     /// Do not output with colors or any special formatting
     Basic,

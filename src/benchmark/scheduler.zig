@@ -11,6 +11,7 @@ const BenchmarkResult = @import("benchmark_result.zig");
 const Commands = @import("../commands.zig");
 const ExportManager = @import("../export/export_manager.zig");
 const Options = @import("../options.zig");
+const Shell = Options.Shell;
 
 allocator: Allocator,
 commands: *Commands,
@@ -32,15 +33,21 @@ pub fn deinit(self: *Scheduler) void {
     self.results.deinit();
 }
 
-// TODO: Implement
+// TODO: Run commands and time how long they take
+// Store the results in self.results
 pub fn run_benchmarks(self: *Scheduler) !void {
-    _ = &self;
+    const shell = Shell{};
+    const command = self.commands.command_list.items[0].expression;
+    const res = try std.process.Child.run(.{
+        .argv = &[_][]const u8{ shell.default, command },
+        .allocator = self.allocator,
+    });
 
-    // create executor
-    // var executor = ;
-
-    // calibrate the executor
-
+    const stdout_file = std.io.getStdOut().writer();
+    var bw = std.io.bufferedWriter(stdout_file);
+    const stdout = bw.writer();
+    try stdout.print("res: {s}\n", .{res.stdout});
+    try bw.flush(); // don't forget to flush!
 }
 
 pub fn final_export(self: *Scheduler) !void {
