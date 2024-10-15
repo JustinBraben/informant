@@ -1,2 +1,2 @@
 # informant
-informant is a zig library aiming to enhance Zig's testing output.
+Inspired by hyperfine, informant is a zig program aiming to benchmark programs via command-line. 

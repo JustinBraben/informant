@@ -1,35 +1,53 @@
+const Cli = @This();
+
 const std = @import("std");
 const io = std.io;
 const mem = std.mem;
 const Allocator = mem.Allocator;
 const builtin = @import("builtin");
-const clap = @import("clap");
 
-const Cli = @This();
+const Options = @import("options.zig");
+const OutputStyleOption = Options.OutputStyleOption;
+const clap = @import("clap");
 
 allocator: Allocator,
 
 warmup: usize = 0,
+min_runs: usize = 10,
+max_runs: usize = 0,
+runs: usize = 0,
+style: OutputStyleOption = .Full,
 help: bool = false,
 version: bool = false,
 
-pub fn parse_args(ally: Allocator) !Cli {
+pub fn get_cli_arguments(allocator: Allocator) !Cli {
     const params = comptime clap.parseParamsComptime(
-        \\-w, --warmup <NUM>        Perform NUM warmup runs before the actual benchmark. This can be used to fill
-        \\                          (disk) caches for I/O-heavy programs.
-        \\-h, --help                Print this help message and exit.
-        \\-V, --version             Show version information.
+        \\-w, --warmup <NUM>                Perform NUM warmup runs before the actual benchmark. This can be used to fill
+        \\                                  (disk) caches for I/O-heavy programs.
+        \\-m, --min_runs <NUM>              Perform at least NUM runs for each command (default: 10).
+        \\-M, --max_runs <NUM>              Perform at most NUM runs for each command. By default, there is no limit.
+        \\-r, --runs <NUM>                  Perform exactly NUM runs for each command. If this option is not specified,
+        \\                                  informant automatically determines the number of runs.
+        \\-s, --style <OutputStyleOption>   Set output style type (default: Full). Set this to 'Basic' to disable output
+        \\                                  coloring and interactive elements. Set it to 'Full' to enable all effects even
+        \\                                  if no interactive terminal was detected. Set this to 'NoColor' to keep the
+        \\                                  interactive output without any colors. Set this to 'Color' to keep the colors
+        \\                                  without any interactive output. Set this to 'None' to disable all the output
+        \\                                  of the tool.
+        \\-h, --help                        Print this help message and exit.
+        \\-V, --version                     Show version information.
         \\
     );
 
     const parsers = comptime .{
         .NUM = clap.parsers.int(usize, 10),
+        .OutputStyleOption = clap.parsers.enumeration(OutputStyleOption),
     };
 
     var diag = clap.Diagnostic{};
     var res = clap.parse(clap.Help, &params, parsers, .{
         .diagnostic = &diag,
-        .allocator = ally,
+        .allocator = allocator,
     }) catch |err| {
         diag.report(io.getStdErr().writer(), err) catch {};
         return err;
@@ -42,8 +60,12 @@ pub fn parse_args(ally: Allocator) !Cli {
     }
 
     return .{
-        .allocator = ally,
+        .allocator = allocator,
         .warmup = if (res.args.warmup) |w| w else 0,
+        .min_runs = if (res.args.min_runs) |min_r| min_r else 10,
+        .max_runs = if (res.args.max_runs) |max_r| max_r else 0,
+        .runs = if (res.args.runs) |r| r else 0,
+        .style = if (res.args.style) |s| s else .Full,
         .help = res.args.help != 0,
         .version = res.args.version != 0,
     };
