@@ -30,13 +30,11 @@ pub fn main() !void {
     var scheduler = try Scheduler.init(allocator, &commands, &options, &export_manager);
     defer scheduler.deinit();
 
-    // try commands.print_members();
-
     try scheduler.run_benchmarks();
     // try scheduler.print_relative_speed_comparison();
     try scheduler.final_export();
 
-    // try cli_arguments.print_members();
+    // try run_child_process_posix();
 }
 
 /// dump cli info to window
@@ -62,11 +60,27 @@ fn dump() !void {
     try export_manager.print_members();
 }
 
-fn run_child_process() !void {
+fn run_child_process_windows() !void {
     const allocator = std.heap.c_allocator;
 
     const res = try std.process.Child.run(.{
         .argv = &[_][]const u8{ "powershell", "echo", "hi" },
+        .allocator = allocator,
+    });
+
+    const stdout_file = std.io.getStdOut().writer();
+    var bw = std.io.bufferedWriter(stdout_file);
+    const stdout = bw.writer();
+
+    try stdout.print("res: {s}\n", .{res.stdout});
+    try bw.flush(); // don't forget to flush!
+}
+
+fn run_child_process_posix() !void {
+    const allocator = std.heap.c_allocator;
+
+    const res = try std.process.Child.run(.{
+        .argv = &[_][]const u8{"ls"},
         .allocator = allocator,
     });
 

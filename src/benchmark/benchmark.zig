@@ -47,16 +47,14 @@ pub fn run(self: *Benchmark) !BenchmarkResult {
     var max: u64 = std.math.minInt(u64);
 
     var timer = try std.time.Timer.start();
-    for (0..5) |_| {
-        const command = self.commands.command_list.items[0];
-        _ = try std.process.Child.run(.{
-            .argv = &[_][]const u8{ shell.default, command.expression },
-            .allocator = self.allocator,
-        });
-        const delta_time = timer.lap();
-        min = @min(min, delta_time);
-        max = @max(max, delta_time);
-    }
+    const command = self.commands.command_list.items[0];
+    _ = try std.process.Child.run(.{
+        .argv = &[_][]const u8{ shell.default, command.expression },
+        .allocator = self.allocator,
+    });
+    const delta_time = timer.lap();
+    min = @min(min, delta_time);
+    max = @max(max, delta_time);
 
     return .{
         .min = min,

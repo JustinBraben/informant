@@ -47,14 +47,24 @@ pub fn write_results(self: *ExportManager, results: *ArrayList(BenchmarkResult),
         var bw = std.io.bufferedWriter(stdout_file);
         const stdout = bw.writer();
 
-        // TODO: Implement
-        try stdout.print(
-            \\Benchmark 1: {s}
-            \\  Time (mean ± σ):      3.279 s ±  0.511 s  [User: 3.600 s, System: 65.803 s]
-            \\  Range (min … max):    {d:.3} s …  {d:.3} s  10 runs
-        , .{ "Get-Date", 2.485, 4.058 });
+        for (results.items, 1..) |item, run| {
+            try stdout.print("run {d}, min: {d}ms, max: {d}ms\n", .{run, item.min / std.time.ns_per_ms, item.max / std.time.ns_per_ms});
+            try bw.flush(); // don't forget to flush!
+        }
 
-        try bw.flush(); // don't forget to flush!
+        for (results.items, 1..) |item, run| {
+            try stdout.print("run {d}, min: {d}ns, max: {d}ns\n", .{run, item.min, item.max});
+            try bw.flush(); // don't forget to flush!
+        }
+
+        // // TODO: Implement
+        // try stdout.print(
+        //     \\Benchmark 1: {s}
+        //     \\  Time (mean ± σ):      3.279 s ±  0.511 s  [User: 3.600 s, System: 65.803 s]
+        //     \\  Range (min … max):    {d:.3} s …  {d:.3} s  10 runs
+        // , .{ "Get-Date", 2.485, 4.058 });
+
+        // try bw.flush(); // don't forget to flush!
     }
 }
 

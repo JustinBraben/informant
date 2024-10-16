@@ -38,10 +38,11 @@ pub fn deinit(self: *Scheduler) void {
 // Store the results in self.results
 pub fn run_benchmarks(self: *Scheduler) !void {
     for (self.commands.command_list.items, 1..) |_, index| {
-        var benchmark = try Benchmark.init(self.allocator, index, self.commands, self.options);
-        defer benchmark.deinit();
-
-        try self.results.append(try benchmark.run());
+        for (0..5) |_| {
+            var benchmark = try Benchmark.init(self.allocator, index, self.commands, self.options);
+            defer benchmark.deinit();
+            try self.results.append(try benchmark.run());
+        }
 
         // const shell = Shell{};
         // const command = commands.expression;
