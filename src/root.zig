@@ -44,6 +44,9 @@ pub fn printProcessTimes_old() !void {
     
     std.debug.print("User Time: {d} ns ({d:.3} ms)\n", .{ user_ns, @as(f64, @floatFromInt(user_ns)) / std.time.ns_per_ms });
     std.debug.print("Kernel Time: {d} ns ({d:.3} ms)\n", .{ kernel_ns, @as(f64, @floatFromInt(kernel_ns)) / std.time.ns_per_ms });
+
+    std.debug.print("user_time: {d} ns\n", .{ windows.fileTimeToNanoSeconds(user_time) });
+    std.debug.print("kernel_time: {d} ns\n", .{ windows.fileTimeToNanoSeconds(kernel_time)});
 }
 
 pub fn printProcessTimes() !void {
