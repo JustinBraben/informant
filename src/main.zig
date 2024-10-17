@@ -59,19 +59,26 @@ pub fn main() !void {
     var bw = std.io.bufferedWriter(stdout_file);
     const stdout = bw.writer();
 
+    var commands = try Commands.from_cli_arguments(allocator, cli_arguments);
+    defer commands.deinit();
+
     var results = std.ArrayList(TimeInfo).init(allocator);
     defer results.deinit();
 
     // Split the command string into separate arguments
-    var cmd_iter = std.mem.tokenize(u8, cli_arguments.command.?[0], " ");
+    // var cmd_iter = std.mem.tokenize(u8, cli_arguments.command.?[0], " ");
     var cmd_args = std.ArrayList([]const u8).init(arena.allocator());
-    while (cmd_iter.next()) |arg| {
-        try cmd_args.append(arg);
+
+    // TODO: set up default shell properly
+    if (native_os == .windows) {
+        try cmd_args.append("cmd.exe");
     }
 
-    // Print parsed arguments
-    for (cmd_args.items, 0..) |arg, index| {
-        try stdout.print("index: {d}, arg: {s}\n", .{index, arg});
+    for (commands.command_list.items) |command| {
+        try cmd_args.append(command.expression);
+        for (command.parameters.items) |param| {
+            try cmd_args.append(param);
+        }
     }
 
     for (0..cli_arguments.min_runs) |_| {

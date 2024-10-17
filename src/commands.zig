@@ -16,30 +16,31 @@ pub const Command = struct {
     /// The command that should be executed (without parameter substitution)
     expression: []const u8,
     /// Zero or more parameter values.
-    parameters: ?[]const []const u8 = null,
+    parameters: std.ArrayList([]const u8),
 
     pub fn init(allocator: Allocator, name: ?[]const u8, expression: []const u8) !Command {
         return .{
             .allocator = allocator,
             .name = if (name) |str| try allocator.dupe(u8, str) else null,
             .expression = try allocator.dupe(u8, expression),
-            .parameters = null,
+            .parameters = std.ArrayList([]const u8).init(allocator),
         };
     }
 
-    pub fn init_parametrized(
-        allocator: Allocator,
-        name: ?[]const u8,
-        expression: []const u8,
-        parameters: ?[]const []const u8,
-    ) !Command {
-        return .{
-            .allocator = allocator,
-            .name = if (name) |str| try allocator.dupe(u8, str) else null,
-            .expression = try allocator.dupe(u8, expression),
-            .parameters = if (parameters) |params| try allocator.dupe([]const u8, params) else null,
-        };
-    }
+    // TODO: Reimplement
+    // pub fn init_parametrized(
+    //     allocator: Allocator,
+    //     name: ?[]const u8,
+    //     expression: []const u8,
+    //     parameters: ?[]const []const u8,
+    // ) !Command {
+    //     return .{
+    //         .allocator = allocator,
+    //         .name = if (name) |str| try allocator.dupe(u8, str) else null,
+    //         .expression = try allocator.dupe(u8, expression),
+    //         .parameters = if (parameters) |params| try allocator.dupe([]const u8, params) else null,
+    //     };
+    // }
 
     pub fn deinit(self: *Command) void {
         if (self.name) |_| {
@@ -48,9 +49,10 @@ pub const Command = struct {
 
         self.allocator.free(self.expression);
 
-        if (self.parameters) |_| {
-            self.allocator.free(self.parameters);
+        for (self.parameters.items) |item| {
+            self.allocator.free(item);
         }
+        self.parameters.deinit();
     }
 };
 
@@ -67,8 +69,14 @@ pub fn from_cli_arguments(allocator: Allocator, cli_args: Cli) !Commands {
 
     var command_list = ArrayList(Command).init(allocator);
     if (cli_args.command) |command| {
+
         for (command) |cmd| {
-            try command_list.append(try Command.init_parametrized(allocator, null, cmd, null));
+            var cmd_iter = std.mem.tokenize(u8, cmd, " ");
+            var command_to_add = try Command.init(allocator, null, cmd_iter.next().?);
+            while (cmd_iter.next()) |param| {
+                try command_to_add.parameters.append(param);
+            }
+            try command_list.append(command_to_add);
         }
     }
 
@@ -79,24 +87,6 @@ pub fn from_cli_arguments(allocator: Allocator, cli_args: Cli) !Commands {
 }
 
 pub fn deinit(self: *Commands) void {
-    // var current = self.command_list.popOrNull();
-    // while (current) |_| {
-    //     current.?.deinit();
-    //     current = self.command_list.popOrNull();
-    // }
-    // for (self.command_list.items) |item| {
-    //     item.deinit();
-    // }
-    for (self.command_list.items) |item| {
-        if (item.name) |nm| {
-            self.allocator.free(nm);
-        }
-        self.allocator.free(item.expression);
-
-        if (item.parameters) |params| {
-            self.allocator.free(params);
-        }
-    }
     self.command_list.deinit();
 }
 
@@ -115,13 +105,17 @@ pub fn print_members(self: *Commands) !void {
 
         try stdout.print("expression: {s}\n", .{command.expression});
 
-        if (command.parameters) |parameters| {
-            for (parameters) |param| {
-                try stdout.print("\tparam: {?s}\n", .{param});
-            }
-        } else {
-            try stdout.print("\tparam: {?}\n", .{null});
+        for (command.parameters.items) |param| {
+            try stdout.print("\tparam: {s}\n", .{param});
         }
+
+        // if (command.parameters) |parameters| {
+        //     for (parameters) |param| {
+        //         try stdout.print("\tparam: {?s}\n", .{param});
+        //     }
+        // } else {
+        //     try stdout.print("\tparam: {?}\n", .{null});
+        // }
     }
 
     try bw.flush(); // don't forget to flush!
