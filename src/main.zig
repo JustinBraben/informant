@@ -55,8 +55,8 @@ pub fn main() !void {
     // program will exit gracefully
     if (cli_arguments.help) return;
 
-    const stdout_file = std.io.getStdOut().writer();
-    var bw = std.io.bufferedWriter(stdout_file);
+    const stdout_file = std.io.getStdOut();
+    var bw = std.io.bufferedWriter(stdout_file.writer());
     const stdout = bw.writer();
 
     var commands = try Commands.from_cli_arguments(allocator, cli_arguments);
@@ -107,8 +107,12 @@ pub fn main() !void {
             \\
             , .{i + 1, result.real, result.user, result.system});
     }
-
     try bw.flush();
+
+    // const config = std.io.tty.detectConfig(stdout_file);
+    // try config.setColor(stdout, .green);
+    // try std.fmt.format(stdout, "Wow!\n", .{});
+    // try bw.flush();
 }
 
 /// dump cli info to window

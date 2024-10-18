@@ -6,6 +6,7 @@ const mem = std.mem;
 const Allocator = mem.Allocator;
 const ArrayList = std.ArrayList;
 const builtin = @import("builtin");
+const native_os = builtin.os.tag;
 
 const Cli = @import("cli.zig");
 
@@ -72,6 +73,19 @@ pub fn from_cli_arguments(allocator: Allocator, cli_args: Cli) !Commands {
 
         for (command) |cmd| {
             var cmd_iter = std.mem.tokenize(u8, cmd, " ");
+
+            // var command_to_add: Command = undefined;
+            // if (native_os == .windows) {
+            //     if (cmd_iter.peek()) |first| {
+            //         if (!mem.eql(u8, first, "powershell") or !mem.eql(u8, first, "cmd.exe")) {
+            //             command_to_add = try Command.init(allocator, null, "cmd.exe"); 
+            //         }
+            //         else {
+            //             command_to_add = try Command.init(allocator, null, first);
+            //         }
+            //     }
+            // }
+
             var command_to_add = try Command.init(allocator, null, cmd_iter.next().?);
             while (cmd_iter.next()) |param| {
                 try command_to_add.parameters.append(param);
